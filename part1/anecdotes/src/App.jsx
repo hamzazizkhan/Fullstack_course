@@ -27,7 +27,7 @@ const App = () => {
   const mostVotesAmount = Math.max(...vote)
   const mostVotesInd = vote.indexOf(mostVotesAmount)
   const mostVotesAnec = anecdotes[mostVotesInd]
-  
+
   const nums = {
     max:7,
     min:0
@@ -42,10 +42,7 @@ const App = () => {
   const handleAnecdoteClick = () => {
     setSelected(rand(nums))
   }
-  
-  
-  
-  
+
   return (
     <div>
       <header>
@@ -63,5 +60,4 @@ const App = () => {
     </div>
   )
 }
-
 export default App
