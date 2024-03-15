@@ -1,32 +1,34 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import noteService from './services/persons'
 
-const Person = ({person}) => {
+const Person = ({person, del}) => {
   return(
     <li>
       {person.name} {person.number}
+      <button onClick={del}>delete</button> 
     </li>
   )
 }
 
-const PersonsList = ({persons}) => {
+const PersonsList = ({persons, del}) => {
   return(
     <ul>
       {persons.map((person)=> 
-      <Person key = {person.name} person={person}/>)}
+      <Person key = {person.name} person={person} del={()=>del(person.id)}/>)}
     </ul>
   )
   
 }
 
-const Filter = ({persons, filterval, handleFiltervalChange}) => {
+const Filter = ({persons, filterval, handleFiltervalChange, del}) => {
   const newPersons = persons.filter(
     (person)=>person.name.toLowerCase()===filterval.toLowerCase())
   
   return (
     <div>
         input shown with <input value={filterval} onChange={handleFiltervalChange}/>
-      <PersonsList persons={newPersons}/>
+      <PersonsList persons={newPersons} del={del}/>
     </div>
   )
 }
@@ -58,11 +60,10 @@ const App = () => {
 
   useEffect(() => {
     console.log('effect')
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
+    noteService.getAll()
+      .then(allpeople => {
         console.log('promise fulfilled')
-        setPersons(response.data)
+        setPersons(allpeople)
       })
   }, [])
   console.log('render', persons.length, 'notes')
@@ -75,16 +76,42 @@ const App = () => {
       number: newNumber
     }
     
-    const result = persons.filter((person)=> person.name===newName)
-    if (result.length>0){ 
+    const CurrName = persons.filter((person)=> person.name===newName)
+    if (CurrName.length>0){ 
+      console.log('CurrName here',CurrName[0].id)
+      const res = window.confirm(`${newName} is already added to phonebook. update number?`)
+      if (res){
+        const id = CurrName[0].id
+        noteService.update(id, nameObject)
+        .then(NameNumber => {
+        setPersons(persons.map(p => p.id !== id ? p : NameNumber))
+        setNewName('')
+        setNewNumber('')
+        console.log(NameNumber)
+      })
+      }
+      return
+    }
+    noteService.create(nameObject)
+    .then(name => {
+      setPersons(persons.concat(name))
       setNewName('')
       setNewNumber('')
-      return(window.alert(`${newName} is already added to phonebook`))
+      console.log(name)
+    })
+  }
+
+  const handleDeletePerson=(id)=>{
+    const person = persons.find(n => n.id === id)
+    const changedPersonslist = persons.filter(p=>p !== person)
+    const newName = person.name
+    const res = window.confirm(`${newName} delete?`)
+    if(res){
+      noteService.del(id).then(response=>{
+        console.log(`deleting person with id ${id}`)
+        setPersons(changedPersonslist)
+      })
     }
-    
-    setPersons(persons.concat(nameObject))
-    setNewName('')
-    setNewNumber('')
   }
 
   const handlePersonChange = (event) =>{
@@ -103,14 +130,15 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      <Filter persons={persons} filterval={filterval} handleFiltervalChange={handleFiltervalChange}/>
+      <Filter persons={persons} filterval={filterval} handleFiltervalChange={handleFiltervalChange} 
+      del={handleDeletePerson}/>
 
       <h2>add a new</h2>
       <PersonForm addPerson={addPerson} newName={newName} newNumber={newNumber} 
         handlePersonChange={handlePersonChange} handleNumberChange={handleNumberChange}/>
 
       <h2>Numbers</h2>
-      <PersonsList persons={persons} />
+      <PersonsList persons={persons} del={handleDeletePerson}/>
       
     </div>
   )
