@@ -52,11 +52,34 @@ const PersonForm = ({addPerson, newName, newNumber, handlePersonChange, handleNu
   
 }
 
+const Notification=({message})=>{
+  if(message===null){
+    return null
+  }
+    return(
+      <div className='error'>
+        {message}
+      </div>
+    )
+}
+const SuccessNotification=({message})=>{
+  if(message===null){
+    return null
+  }
+    return(
+      <div className='success'>
+        {message}
+      </div>
+    )
+}
+
 const App = () => {
   const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filterval, setFilterval] = useState('')
+  const [NotificationMessage, setMessage] = useState(null)
+  const [SuccessMessage, setSuccessMessage] = useState(null)
 
   useEffect(() => {
     console.log('effect')
@@ -78,7 +101,7 @@ const App = () => {
     
     const CurrName = persons.filter((person)=> person.name===newName)
     if (CurrName.length>0){ 
-      console.log('CurrName here',CurrName[0].id)
+      
       const res = window.confirm(`${newName} is already added to phonebook. update number?`)
       if (res){
         const id = CurrName[0].id
@@ -88,6 +111,13 @@ const App = () => {
         setNewName('')
         setNewNumber('')
         console.log(NameNumber)
+        const message = `${newName} updated number`
+        setSuccessMessage(message)
+        setTimeout(()=>{setSuccessMessage(null)}, 5000)
+      })
+      .catch(error=>{
+        setMessage(`info of ${newName} has already been removed`)
+        setTimeout(()=>{setMessage(null)}, 5000)
       })
       }
       return
@@ -98,6 +128,10 @@ const App = () => {
       setNewName('')
       setNewNumber('')
       console.log(name)
+      const message = `${newName} added`
+      setSuccessMessage(message)
+      setTimeout(()=>{setSuccessMessage(null)}, 5000)
+      
     })
   }
 
@@ -127,9 +161,14 @@ const App = () => {
     setFilterval(event.target.value)
   }
 
+  
+
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={NotificationMessage}/>
+      <SuccessNotification message={SuccessMessage}/>
+
       <Filter persons={persons} filterval={filterval} handleFiltervalChange={handleFiltervalChange} 
       del={handleDeletePerson}/>
 
